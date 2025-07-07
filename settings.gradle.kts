@@ -1,5 +1,12 @@
 rootProject.name = "backend-development-course"
 
+pluginManagement {
+    plugins {
+        id("org.jetbrains.kotlin.jvm") version "1.9.0"
+        id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
+    }
+}
+
 include("deprecated")
 include("coffee-shop-integration-tests")
 include("coffee-shop-application")

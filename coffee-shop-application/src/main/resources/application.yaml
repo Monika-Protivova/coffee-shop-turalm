@@ -1,6 +1,18 @@
 ktor:
   deployment:
     port: 8080
+    watch:
+      - classes
+
+  application:
+    modules:
+      - app.MainKt.module
+
+  database:
+    url: jdbc:h2:mem:coffee_shop;DB_CLOSE_DELAY=-1
+    driver: org.h2.Driver
+    user: sa
+    password: ""
 
 jwt:
   secret: "secret"

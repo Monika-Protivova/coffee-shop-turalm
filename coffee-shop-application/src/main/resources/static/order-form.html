@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Coffee Shop API Client</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        input, button { margin: 5px; }
+        .order-item { margin-bottom: 10px; }
+        textarea { width: 100%; height: 200px; }
+    </style>
+</head>
+<body>
+
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="loginStatus"></p>
+
+<hr>
+
+<h2>Create Order</h2>
+<input type="number" id="customerId" placeholder="Customer ID">
+<div id="orderItemsContainer">
+    <div class="order-item">
+        <input type="number" name="menuItemId" placeholder="Menu Item ID" required />
+        <input type="number" name="quantity" placeholder="Quantity" required />
+    </div>
+</div>
+<button onclick="addOrderItem()">Add Another Item</button><br>
+<button onclick="createOrder()">Submit Order</button>
+
+<hr>
+
+<h2>Get All Orders</h2>
+<button onclick="getAllOrders()">Get Orders</button>
+
+<h2>Get Order by ID</h2>
+<input type="number" id="getOrderId" placeholder="Order ID">
+<button onclick="getOrderById()">Get Order</button>
+
+<h2>Update Order Status</h2>
+<input type="number" id="updateOrderId" placeholder="Order ID">
+<input type="text" id="updateStatus" placeholder="New Status (e.g. COMPLETED)">
+<button onclick="updateOrder()">Update Order</button>
+
+<hr>
+
+<h2>Response</h2>
+<textarea id="responseBox" readonly></textarea>
+
+<script>
+    let jwtToken = "";
+
+    function addOrderItem() {
+        const container = document.getElementById("orderItemsContainer");
+        const div = document.createElement("div");
+        div.classList.add("order-item");
+        div.innerHTML = `
+        <input type="number" name="menuItemId" placeholder="Menu Item ID" required />
+        <input type="number" name="quantity" placeholder="Quantity" required />
+      `;
+        container.appendChild(div);
+    }
+
+    async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const response = await fetch("http://localhost:8080/api/v1/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                document.getElementById("loginStatus").innerText = "Login failed: " + errorText;
+                return;
+            }
+
+            const data = await response.json();
+            jwtToken = data.token;
+            document.getElementById("loginStatus").innerText = "Login successful! Token stored.";
+        } catch (err) {
+            document.getElementById("loginStatus").innerText = "Login error: " + err;
+        }
+    }
+
+    async function createOrder() {
+        const customerId = parseInt(document.getElementById("customerId").value);
+        const items = [];
+        const itemDivs = document.querySelectorAll(".order-item");
+
+        itemDivs.forEach(div => {
+            const menuItemId = parseInt(div.querySelector('input[name="menuItemId"]').value);
+            const quantity = parseInt(div.querySelector('input[name="quantity"]').value);
+            if (!isNaN(menuItemId) && !isNaN(quantity)) {
+                items.push({ menuItemId, quantity });
+            }
+        });
+
+        try {
+            const response = await fetch("http://localhost:8080/api/v1/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${jwtToken}`
+                },
+                body: JSON.stringify({ customerId, items })
+            });
+
+            const text = await response.text();
+            document.getElementById("responseBox").value = `Status: ${response.status} ${response.statusText}\n\n${text}`;
+        } catch (err) {
+            document.getElementById("responseBox").value = "Error: " + err;
+        }
+    }
+
+    async function getAllOrders() {
+        try {
+            const response = await fetch("http://localhost:8080/api/v1/orders", {
+                headers: {
+                    "Authorization": `Bearer ${jwtToken}`
+                }
+            });
+            const text = await response.text();
+            document.getElementById("responseBox").value = `Status: ${response.status} ${response.statusText}\n\n${text}`;
+        } catch (err) {
+            document.getElementById("responseBox").value = "Error: " + err;
+        }
+    }
+
+    async function getOrderById() {
+        const id = document.getElementById("getOrderId").value;
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/v1/orders/${id}`, {
+                headers: {
+                    "Authorization": `Bearer ${jwtToken}`
+                }
+            });
+
+            const text = await response.text();
+            document.getElementById("responseBox").value = `Status: ${response.status} ${response.statusText}\n\n${text}`;
+        } catch (err) {
+            document.getElementById("responseBox").value = "Error: " + err;
+        }
+    }
+
+    async function updateOrder() {
+        const id = document.getElementById("updateOrderId").value;
+        const status = document.getElementById("updateStatus").value;
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/v1/orders/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${jwtToken}`
+                },
+                body: JSON.stringify({ status })
+            });
+
+            const text = await response.text();
+            document.getElementById("responseBox").value = `Status: ${response.status} ${response.statusText}\n\n${text}`;
+        } catch (err) {
+            document.getElementById("responseBox").value = "Error: " + err;
+        }
+    }
+</script>
+</body>
+</html>
